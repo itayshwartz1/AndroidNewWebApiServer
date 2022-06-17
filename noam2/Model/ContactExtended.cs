@@ -4,6 +4,17 @@ namespace noam2.Model
 {
     public class ContactExtended
     {
+
+        public ContactExtended(string id, string name, string server, string last, string lastdate, string myUser)
+        {
+            Id = id;
+            Name = name;
+            Server = server;
+            Last = last;
+            Lastdate = lastdate;
+            MyUser = myUser;
+        }
+
         [Key]
         public string Id { get; set; }
 

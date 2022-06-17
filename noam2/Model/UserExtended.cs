@@ -5,6 +5,14 @@ namespace noam2.Model
 {
     public class UserExtended
     {
+        public UserExtended(string id, string name, string password, string server)
+        {
+            Id = id;
+            Name = name;
+            Password = password;
+            Server = server;
+        }
+
         [Key]
         public string Id { get; set; }
         [Required]
