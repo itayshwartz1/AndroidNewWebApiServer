@@ -33,7 +33,7 @@ namespace noam2.Service
 
         public async Task<int> CreateUser(User user, noam2Context database)
         {
-            UserExtended userExtended = new UserExtended() {Id= user.Id,Name= user.Name,Password= user.Password,Server user.Server };
+            UserExtended userExtended = new UserExtended() {Id= user.Id,Name= user.Name,Password= user.Password,Server = user.Server };
             database.UserExtended.Add(userExtended);
             await database.SaveChangesAsync();
             return 1;
@@ -82,7 +82,9 @@ namespace noam2.Service
                     Server= userEx.Server,Contacts = contactsList});
                 
             }
-            return usersList;
+            throw new NotImplementedException();
+
+            //return usersList;
 
 
         }
