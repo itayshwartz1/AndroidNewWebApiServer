@@ -18,7 +18,8 @@ namespace noam2.Service
     {
         public async Task<int> CreateContact(string connectedId, Contact contact, noam2Context database)
         {
-            ContactExtended contactExtended = new ContactExtended(contact.Id, contact.Name, contact.Server, contact.Last, contact.Lastdate, connectedId);
+            ContactExtended contactExtended = new ContactExtended() { Id=contact.Id, Name=contact.Name, Server=contact.Server, 
+                Last=contact.Last, Lastdate= contact.Lastdate, MyUser= connectedId };
             database.ContactExtended.Add(contactExtended);
             await database.SaveChangesAsync();
             return 1;
@@ -32,7 +33,7 @@ namespace noam2.Service
 
         public async Task<int> CreateUser(User user, noam2Context database)
         {
-            UserExtended userExtended = new UserExtended(user.Id, user.Name, user.Password, user.Server);
+            UserExtended userExtended = new UserExtended() {Id= user.Id,Name= user.Name,Password= user.Password,Server user.Server };
             database.UserExtended.Add(userExtended);
             await database.SaveChangesAsync();
             return 1;
@@ -58,28 +59,32 @@ namespace noam2.Service
             throw new NotImplementedException();
         }
 
-        public Task<List<User>> GetAllUsers(noam2Context database)
+        public async Task<List<User>> GetAllUsers(noam2Context database)
         {
             List<UserExtended> userExtendedList = database.UserExtended.ToList();
             List<ContactExtended> contactExtendedsList = database.ContactExtended.ToList();
             List<User> usersList = new List<User>();
 
-            foreach(var userEx in userExtendedList)
+
+
+            foreach (var userEx in userExtendedList)
             {
                 List<Contact> contactsList = new List<Contact> { };
-                foreach(var contactEx in contactExtendedsList)
+                foreach (var contactEx in contactExtendedsList)
                 {
                     if (contactEx.MyUser.Equals(userEx.Id))
                     {
-                        contactsList.Add(new Contact(contactEx.Id, contactEx.Name, contactEx.Server, contactEx.Last, contactEx.Lastdate));
+                        contactsList.Add(new Contact() { Id = contactEx.Id, Name = contactEx.Name,
+                            Server = contactEx.Server, Last = contactEx.Last, Lastdate = contactEx.Lastdate });
                     }
                 }
-                User user = new User(userEx.Id, userEx.Name, userEx.Password, userEx.Server, contactsList);
+                usersList.Add( new User() {Id= userEx.Id,Name= userEx.Name,Password= userEx.Password,
+                    Server= userEx.Server,Contacts = contactsList});
+                
             }
-            
+            return usersList;
 
-            
-            throw new NotImplementedException();
+
         }
 
         public Task<List<Chat>> GetChats(string id, noam2Context database)

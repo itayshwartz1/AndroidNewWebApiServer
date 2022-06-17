@@ -4,14 +4,6 @@ namespace noam2.Model
 {
     public class Contact
     {
-        public Contact(string id, string name, string server, string last, string lastdate)
-        {
-            Id = id;
-            Name = name;
-            Server = server;
-            Last = last;
-            Lastdate = lastdate;
-        }
 
         [Key]
         public string Id { get; set; }

@@ -4,6 +4,7 @@ namespace noam2.Model
 {
     public class User
     {
+
         [Key]
         public string Id { get; set; }
         [Required]
@@ -16,5 +17,6 @@ namespace noam2.Model
         public string Server { get; set; }
         [Required]
         public List<Contact> Contacts { get; set; }
+        public List<Contact> ContactsList { get; }
     }
 }
