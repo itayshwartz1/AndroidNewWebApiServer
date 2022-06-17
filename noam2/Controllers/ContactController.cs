@@ -160,7 +160,7 @@ namespace noam2.Controllers
                 return Json(user);
             }
             return NotFound();
-        }
+        } 
 
         // Get: contacts/AllUsers
         [HttpGet("AllUsers")]
