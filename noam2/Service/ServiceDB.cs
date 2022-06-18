@@ -28,6 +28,7 @@ namespace noam2.Service
 
         public Task<int> CreateMessage(string connectContactId, string destContactId, string content, noam2Context database)
         {
+            
             throw new NotImplementedException();
         }
 
@@ -51,7 +52,19 @@ namespace noam2.Service
 
         public Task<List<Contact>> GetAllContacts(string connectId, noam2Context database)
         {
+            List<ContactExtended> contactExtendedsList = database.ContactExtended.ToList();
+            List<Contact> contactList = new List<Contact>() { };
+            foreach(var contact in contactExtendedsList)
+            {
+                if(contact.MyUser == connectId)
+                {
+                    contactList.Add(new Contact() { Id=contact.Id, Name = contact.Name, Server = contact.Server,
+                                        Last = contact.Last, Lastdate = contact.Last});
+                }
+            }
             throw new NotImplementedException();
+
+            //return contactList
         }
 
         public Task<List<Model.Message>> GetAllMessages(string connectContactId, string destContactId, noam2Context database)
@@ -82,9 +95,9 @@ namespace noam2.Service
                     Server= userEx.Server,Contacts = contactsList});
                 
             }
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
 
-            //return usersList;
+            return usersList;
 
 
         }
