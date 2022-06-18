@@ -51,7 +51,8 @@ namespace noam2.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetContact(string id, string connectedId)
         {
-            Contact contact = await _contactsService.GetContact(connectedId, id, database);
+            
+            Contact contact = _contactsService.GetContact(connectedId, id, database).Result;
             if (contact == null)
             {
                 return NotFound();
@@ -166,10 +167,7 @@ namespace noam2.Controllers
         [HttpGet("AllUsers")]
         public async Task<IActionResult> GetAllUsers()
         {
-            var res = Json(_contactsService.GetAllUsers(database));
-            return res;
-            
-
+            return Json(_contactsService.GetAllUsers(database).Result);
         }
 
 

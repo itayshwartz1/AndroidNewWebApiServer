@@ -26,6 +26,53 @@ namespace noam2.Service
 
         }
 
+        public async Task<Contact> GetContact(string connectContactId, string contactId, noam2Context database)
+        {
+            
+            List<ContactExtended> contactExtendedsList = database.ContactExtended.ToList();
+            foreach(var contact in contactExtendedsList)
+            {
+                if(contact.Id.Equals(contactId) && contact.MyUser.Equals(connectContactId)){
+                    return new Contact() { Id = contact.Id, Name = contact.Name, Server = contact.Server,
+                                                Last = contact.Last, Lastdate = contact.Lastdate};
+                }
+            }
+            return null;
+        }
+
+        public Task<List<Contact>> GetAllContacts(string connectId, noam2Context database)
+        {
+            List<ContactExtended> contactExtendedsList = database.ContactExtended.ToList();
+            List<Contact> contactList = new List<Contact>() { };
+            foreach (var contact in contactExtendedsList)
+            {
+                if (contact.MyUser == connectId)
+                {
+                    contactList.Add(new Contact()
+                    {
+                        Id = contact.Id,
+                        Name = contact.Name,
+                        Server = contact.Server,
+                        Last = contact.Last,
+                        Lastdate = contact.Last
+                    });
+                }
+            }
+            throw new NotImplementedException();
+
+            //return contactList
+        }
+
+        public Task<int> DeleteContact(string connectContactId, string contactId, noam2Context database)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> UpdateContact(string connectContactId, string destId, string Name, string Server, noam2Context database)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<int> CreateMessage(string connectContactId, string destContactId, string content, noam2Context database)
         {
             
@@ -40,32 +87,14 @@ namespace noam2.Service
             return 1;
         }
 
-        public Task<int> DeleteContact(string connectContactId, string contactId, noam2Context database)
-        {
-            throw new NotImplementedException();
-        }
+        
 
         public Task<int> DeleteMessageById(string connectContactId, string destContactId, int messageId, noam2Context database)
         {
             throw new NotImplementedException();
         }
 
-        public Task<List<Contact>> GetAllContacts(string connectId, noam2Context database)
-        {
-            List<ContactExtended> contactExtendedsList = database.ContactExtended.ToList();
-            List<Contact> contactList = new List<Contact>() { };
-            foreach(var contact in contactExtendedsList)
-            {
-                if(contact.MyUser == connectId)
-                {
-                    contactList.Add(new Contact() { Id=contact.Id, Name = contact.Name, Server = contact.Server,
-                                        Last = contact.Last, Lastdate = contact.Last});
-                }
-            }
-            throw new NotImplementedException();
-
-            //return contactList
-        }
+        
 
         public Task<List<Model.Message>> GetAllMessages(string connectContactId, string destContactId, noam2Context database)
         {
@@ -107,10 +136,7 @@ namespace noam2.Service
             throw new NotImplementedException();
         }
 
-        public Task<Contact> GetContact(string connectContactId, string contactId, noam2Context database)
-        {
-            throw new NotImplementedException();
-        }
+        
 
         public Task<Model.Message> GetMessageById(string connectContactId, string destContactId, int messageId, noam2Context database)
         {
@@ -142,10 +168,7 @@ namespace noam2.Service
             throw new NotImplementedException();
         }
 
-        public Task<int> UpdateContact(string connectContactId, string destId, string Name, string Server, noam2Context database)
-        {
-            throw new NotImplementedException();
-        }
+        
 
         public Task<int> UpdateMessageById(string connectContactId, string destContactId, int messageId, string message, noam2Context database)
         {
