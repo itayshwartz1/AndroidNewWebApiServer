@@ -257,6 +257,10 @@ namespace noam2.Service
 
 
             User user = await GetUser(id,  database);
+            if(user == null)
+            {
+                return new List<Chat>() { };
+            }
             foreach(var contact in user.Contacts)
             {
                 Boolean isThereMessage = false;
@@ -296,7 +300,7 @@ namespace noam2.Service
         public async Task<User> GetUser(string id, noam2Context database)
         {
             User user = null;
-            List<User> list =await GetAllUsers(database);
+            List<User> list = await GetAllUsers(database);
             user = list.FirstOrDefault(user => user.Id == id);
             return user;
         }
