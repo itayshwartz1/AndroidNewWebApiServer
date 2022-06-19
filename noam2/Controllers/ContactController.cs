@@ -179,7 +179,7 @@ namespace noam2.Controllers
         [HttpGet("Chats")]
         public async Task<IActionResult> GetChats(string connectedId)
         {
-            return Json( _contactsService.GetChats(connectedId, database));
+            return Json( await _contactsService.GetChats(connectedId, database));
            
         }
 

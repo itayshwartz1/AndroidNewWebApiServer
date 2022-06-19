@@ -2,6 +2,7 @@ using Chatty.Api.Hubs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using noam2.Data;
 using noam2.Model;
 using noam2.Service;
 
@@ -11,10 +12,12 @@ namespace noam2.Controllers
     [Route("api/[controller]")]
     public class transferController : Controller
     {
-        private static IContactsService _contactsService;
+        private static IServiceDB _contactsService;
         IHubContext<ChatHub> hub;
-        public transferController(ContactsService contactsService, IHubContext<ChatHub> hub)
+        noam2Context database;
+        public transferController(IServiceDB contactsService, IHubContext<ChatHub> hub, noam2Context db)
         {
+            database = db;
             _contactsService = contactsService;
             this.hub = hub;
         }
@@ -31,7 +34,7 @@ namespace noam2.Controllers
         [HttpPost]
         public async Task<IActionResult> TransferMessage([Bind("From,To,Content")] TransferMessageObject transferMessageObject)
         {
-            int isTransfered = _contactsService.TransferMessage(transferMessageObject.From, transferMessageObject.To, transferMessageObject.Content);
+            int isTransfered =await _contactsService.TransferMessage(transferMessageObject.From, transferMessageObject.To, transferMessageObject.Content, database);
             if (isTransfered == 1)
             {
                 await hub.Clients.All.SendAsync("ReceiveMessage", transferMessageObject.Content, transferMessageObject.From, transferMessageObject.To);

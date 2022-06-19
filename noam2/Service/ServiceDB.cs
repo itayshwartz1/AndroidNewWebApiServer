@@ -94,7 +94,6 @@ namespace noam2.Service
         public async Task<int> CreateMessage(string connectContactId, string destContactId, string content, noam2Context database)
         {
             List<MessageExtanded> messages = database.MessageExtanded.ToList();
-            int count = messages.Count();
            
             MessageExtanded newMessage = new MessageExtanded()
             {
@@ -112,6 +111,7 @@ namespace noam2.Service
             {
                 newMessage.User1 = firstMessage.User1;
                 newMessage.User2 = firstMessage.User2;
+                newMessage.Sent = firstMessage.User1.Equals(connectContactId);
             }
             database.MessageExtanded.Add(newMessage);
             await database.SaveChangesAsync();
@@ -190,16 +190,56 @@ namespace noam2.Service
                     Server= userEx.Server,Contacts = contactsList});
                 
             }
-            //throw new NotImplementedException();
 
             return usersList;
 
 
         }
 
-        public Task<List<Chat>> GetChats(string id, noam2Context database)
+        public async Task<List<Chat>> GetChats(string id, noam2Context database)
         {
-            throw new NotImplementedException();
+            List<Chat> chats = new List<Chat>() { };
+            List<MessageExtanded> messageExtandeds = database.MessageExtanded.ToList();
+            foreach(var message in messageExtandeds)
+            {
+                bool isChatFound = false;
+                foreach(var chat in chats)
+                {
+                    if(chat.User1.Equals(message.User1) && chat.User2.Equals(message.User2) || chat.User1.Equals(message.User2) && chat.User2.Equals(message.User1))
+                    {
+                        chat.Messages.Add(new Model.Message() { Id = message.Id, Content = message.Content, Created = message.Created, Sent = message.Sent });
+                        isChatFound = true;
+                    }
+                }
+                if (!isChatFound)
+                {
+                    Chat newChat = new Chat() { User1 = message.User1, User2 = message.User2, Messages = new List<Model.Message>() { }, Id = message.Id };
+                    newChat.Messages.Add(new Model.Message() { Id = message.Id, Content = message.Content, Created = message.Created, Sent = message.Sent});
+                    chats.Add(newChat);
+
+                }
+            }
+
+
+            User user = await GetUser(id,  database);
+            foreach(var contact in user.Contacts)
+            {
+                Boolean isThereMessage = false;
+                foreach(var messageEx in messageExtandeds)
+                {
+                    if(messageEx.User1.Equals(id) || messageEx.User2.Equals(id)){
+                        isThereMessage = true;
+                    }
+                }
+                if (!isThereMessage)
+                {
+                    chats.Add(new Chat() { Id = chats.Count() + 1, User1 = id, User2 = contact.Id });
+                }
+            }
+
+
+
+            return chats;
         }
 
         
@@ -231,53 +271,21 @@ namespace noam2.Service
             return await GetUser(id, database);
         }
 
-        public Task<int> InviteContact(string from, string to, string server, noam2Context database)
+        public async Task<int> InviteContact(string from, string to, string server, noam2Context database)
         {
-            throw new NotImplementedException();
+            int res =  await CreateContact(to, new Contact() { Id = from, Name = from, Server = server, Last = "", Lastdate = "" }, database);
+            await notifyInviteToAndroidDevicesAsync(from, to, server);
+            return res;
         }
 
-        public async Task<int> SetToken(TokenToId tokenToId, noam2Context database)
-        {
-            TokenToId isTokenExist = null;
-            isTokenExist = tokenToIds.FirstOrDefault(t => t.Id == tokenToId.Id && t.Token == tokenToId.Token);
-            if (isTokenExist == null)
-            {
-                tokenToIds.Add(tokenToId);
-            }
-            return 1;
-        }
-
-        public Task<int> TransferMessage(string from, string to, string content, noam2Context database)
-        {
-            throw new NotImplementedException();
-        }
-
-        
-
-        public async Task<int> UpdateMessageById(string connectContactId, string destContactId, int messageId, string content, noam2Context database)
-        {
-            MessageExtanded message = database.MessageExtanded.ToList().FirstOrDefault(m => m.Id == messageId);
-            var toEdit = database.MessageExtanded.Where(m => m.Id == messageId);
-            if (toEdit == null)
-            {
-                return 0;
-            }
-            database.MessageExtanded.RemoveRange(toEdit);
-            await database.SaveChangesAsync();
-            database.MessageExtanded.Add(new MessageExtanded() { Id = message.Id, Content= content, Created = message.Created,
-                                                User1 = message.User1, User2 = message.User2, Sent = message.Sent});
-            await database.SaveChangesAsync();
-            return 1;
-        }
-
-        public async Task notifyTransferToAndroidDevicesAsync(String id, String Content)
+        public async Task notifyInviteToAndroidDevicesAsync(String from, String id, String server)
         {
 
             if (FirebaseApp.DefaultInstance == null)
             {
                 FirebaseApp.Create(new AppOptions()
                 {
-                    Credential = GoogleCredential.FromFile("private_key.json")
+                    Credential = GoogleCredential.FromFile("private.json")
                 });
 
             }
@@ -295,9 +303,127 @@ namespace noam2.Service
             // See documentation on defining a message payload.
             var message = new FirebaseAdmin.Messaging.Message()
             {
-                Data = new Dictionary<string, string>() { { "ITAY", "NOAM" } },
+                Data = new Dictionary<string, string>() { { "Invite", "1" }, { "From", from }, { "Server", server } },
                 Token = registrationToken,
-                Notification = new Notification() { Title = "this is the title!!", Body = " this is the body!!!" }
+                Notification = new Notification() { Title = from + " open chat with you" }
+            };
+
+
+
+
+            // Send a message to the device corresponding to the provided
+            // registration token.
+            string response = await FirebaseMessaging.DefaultInstance.SendAsync(message);
+            // Response is a message ID string.
+            Console.WriteLine("Successfully sent message: " + response);
+        }
+
+
+
+        public async Task<int> SetToken(TokenToId tokenToId, noam2Context database)
+        {
+            TokenToId isTokenExist = null;
+            isTokenExist = tokenToIds.FirstOrDefault(t => t.Id == tokenToId.Id && t.Token == tokenToId.Token);
+            if (isTokenExist == null)
+            {
+                tokenToIds.Add(tokenToId);
+            }
+            return 1;
+        }
+
+        public async Task<int> TransferMessage(string from, string to, string content, noam2Context database)
+        {
+            List<Chat> chats = await GetChats(from, database);
+            Chat chat = chats.FirstOrDefault(c => (c.User1 == from && c.User2 == to) || c.User2 == from && c.User1 == to);
+            if(chat == null)
+            {
+                return 0;
+            }
+            bool sent = chat.User1 == from;
+            string date = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
+            database.MessageExtanded.Add(new MessageExtanded() { User1 = chat.User1, User2 = chat.User2, Content = content,Created = date});
+
+            User userTo = await GetUserById(to, database);
+            if (userTo != null)
+            {
+                ContactExtended contactExtended = database.ContactExtended.ToList().FirstOrDefault(c => c.Id == from);
+                if(contactExtended != null)
+                {
+                    database.ContactExtended.Remove(contactExtended);
+                    await database.SaveChangesAsync();
+                    contactExtended.Last = content;
+                    contactExtended.Lastdate = date;
+                    database.ContactExtended.Add(contactExtended);
+                    await database.SaveChangesAsync();
+                }
+            }
+
+            User userFrom = await GetUserById(from, database);
+            if (userFrom != null)
+            {
+                ContactExtended contactExtended = database.ContactExtended.ToList().FirstOrDefault(c => c.Id == to);
+                if (contactExtended != null)
+                {
+                    database.ContactExtended.Remove(contactExtended);
+                    await database.SaveChangesAsync();
+                    contactExtended.Last = content;
+                    contactExtended.Lastdate = date;
+                    database.ContactExtended.Add(contactExtended);
+                    await database.SaveChangesAsync();
+                }
+            }
+            notifyTransferToAndroidDevicesAsync(from, to, content);
+
+            return 1;
+        }
+
+
+
+        public async Task<int> UpdateMessageById(string connectContactId, string destContactId, int messageId, string content, noam2Context database)
+        {
+            List<MessageExtanded> messageExtandeds = database.MessageExtanded.ToList();
+            MessageExtanded message = messageExtandeds.FirstOrDefault(m => m.Id == messageId);
+            var toEdit = messageExtandeds.Where(m => m.Id == messageId);
+            if (toEdit == null || message == null)
+            {
+                return 0;
+            }
+            database.MessageExtanded.RemoveRange(toEdit);
+            await database.SaveChangesAsync();
+            database.MessageExtanded.Add(new MessageExtanded() { Content= content, Created = message.Created,
+                                                User1 = message.User1, User2 = message.User2, Sent = message.Sent});
+            await database.SaveChangesAsync();
+            return 1;
+        }
+
+        public async Task notifyTransferToAndroidDevicesAsync(String from, String id, String Content)
+        {
+
+            if (FirebaseApp.DefaultInstance == null)
+            {
+                FirebaseApp.Create(new AppOptions()
+                {
+                    Credential = GoogleCredential.FromFile("private.json")
+                });
+
+            }
+
+
+            TokenToId isTokenExist = null;
+            isTokenExist = tokenToIds.FirstOrDefault(t => t.Id == id);
+            if (isTokenExist == null)
+            {
+                return;
+            }
+
+            var registrationToken = isTokenExist.Token;
+
+            // See documentation on defining a message payload.
+            var message = new FirebaseAdmin.Messaging.Message()
+            {
+                Data = new Dictionary<string, string>() { { "Invite", "0" }, { "From", from } },
+                Token = registrationToken,
+                Notification = new Notification() { Title = "new message from: " + from, Body = Content }
             };
 
 
