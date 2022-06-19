@@ -79,6 +79,10 @@ namespace noam2.Service
         public async Task<int> UpdateContact(string connectContactId, string destId, string Name, string Server, noam2Context database)
         {
             ContactExtended contact = database.ContactExtended.ToList().FirstOrDefault(contact => contact.MyUser == connectContactId && contact.Id == destId); 
+            if(contact == null)
+            {
+                return 0;
+            }
             var toEdit = database.ContactExtended.Where(c => c.Id == destId && c.MyUser == connectContactId);
             if (toEdit == null)
             {
@@ -94,14 +98,14 @@ namespace noam2.Service
         public async Task<int> CreateMessage(string connectContactId, string destContactId, string content, noam2Context database)
         {
             List<MessageExtanded> messages = database.MessageExtanded.ToList();
-           
+            string date = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
             MessageExtanded newMessage = new MessageExtanded()
             {
                 User1 = connectContactId,
                 User2 = destContactId,
                 Content = content,
                 Sent = true,
-                Created = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")
+                Created = date
             };
 
 
@@ -115,7 +119,38 @@ namespace noam2.Service
             }
             database.MessageExtanded.Add(newMessage);
             await database.SaveChangesAsync();
-            int i = 0;
+
+            User userTo = await GetUserById(destContactId, database);
+            if (userTo != null)
+            {
+                ContactExtended contactExtended = database.ContactExtended.ToList().FirstOrDefault(c => c.Id == connectContactId);
+                if (contactExtended != null)
+                {
+                    database.ContactExtended.Remove(contactExtended);
+                    await database.SaveChangesAsync();
+                    contactExtended.Last = content;
+                    contactExtended.Lastdate = date;
+                    database.ContactExtended.Add(contactExtended);
+                    await database.SaveChangesAsync();
+                }
+            }
+
+            User userFrom = await GetUserById(connectContactId, database);
+            if (userFrom != null)
+            {
+                ContactExtended contactExtended = database.ContactExtended.ToList().FirstOrDefault(c => c.Id == destContactId);
+                if (contactExtended != null)
+                {
+                    database.ContactExtended.Remove(contactExtended);
+                    await database.SaveChangesAsync();
+                    contactExtended.Last = content;
+                    contactExtended.Lastdate = date;
+                    database.ContactExtended.Add(contactExtended);
+                    await database.SaveChangesAsync();
+                }
+            }
+
+
             return 1;
         }
 
