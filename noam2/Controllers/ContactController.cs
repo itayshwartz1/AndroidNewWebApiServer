@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using noam2.Data;
 using noam2.Model;
 using noam2.Service;
+using System.Data;
 
 namespace noam2.Controllers
 {
@@ -24,6 +26,7 @@ namespace noam2.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateContactAsync(string connectedId ,[Bind("Id,Name,Server")] ContactCreate contactCreate)
         {
+            
             Contact contact = new Contact() { Id = contactCreate.Id, Name = contactCreate.Name, Server = contactCreate.Server, Last = "", Lastdate = "" };
             int isCreates= await _contactsService.CreateContact(connectedId, contact, database);
             if (isCreates == 1)
@@ -52,7 +55,7 @@ namespace noam2.Controllers
         public async Task<IActionResult> GetContact(string id, string connectedId)
         {
             
-            Contact contact = _contactsService.GetContact(connectedId, id, database).Result;
+            Contact contact = await _contactsService.GetContact(connectedId, id, database);
             if (contact == null)
             {
                 return NotFound();
@@ -167,7 +170,7 @@ namespace noam2.Controllers
         [HttpGet("AllUsers")]
         public async Task<IActionResult> GetAllUsers()
         {
-            return Json(_contactsService.GetAllUsers(database).Result);
+            return Json(await _contactsService.GetAllUsers(database));
         }
 
 

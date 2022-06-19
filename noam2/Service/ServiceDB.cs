@@ -62,20 +62,65 @@ namespace noam2.Service
             return contactList;
         }
 
-        public Task<int> DeleteContact(string connectContactId, string contactId, noam2Context database)
+        public async Task<int> DeleteContact(string connectContactId, string contactId, noam2Context database)
         {
-            throw new NotImplementedException();
+            var toRemove = database.ContactExtended.Where(c => c.Id == contactId && c.MyUser == connectContactId);
+            if(toRemove == null)
+            {
+                return 0;
+            }
+            database.ContactExtended.RemoveRange(toRemove);
+            await database.SaveChangesAsync();
+
+            return 1;
         }
 
-        public Task<int> UpdateContact(string connectContactId, string destId, string Name, string Server, noam2Context database)
+        public async Task<int> UpdateContact(string connectContactId, string destId, string Name, string Server, noam2Context database)
         {
-            throw new NotImplementedException();
+            ContactExtended contact = database.ContactExtended.ToList().FirstOrDefault(contact => contact.MyUser == connectContactId && contact.Id == destId); 
+            var toEdit = database.ContactExtended.Where(c => c.Id == destId && c.MyUser == connectContactId);
+            if (toEdit == null)
+            {
+                return 0;
+            }
+            database.ContactExtended.RemoveRange(toEdit);
+            await database.SaveChangesAsync();
+            database.ContactExtended.Add(new ContactExtended() { Id = destId,MyUser = contact.MyUser, Name = Name, Server = Server, Last = contact.Last, Lastdate = contact.Lastdate });
+            await database.SaveChangesAsync();
+            return 1;
         }
 
-        public Task<int> CreateMessage(string connectContactId, string destContactId, string content, noam2Context database)
+        public async Task<int> CreateMessage(string connectContactId, string destContactId, string content, noam2Context database)
         {
-            
-            throw new NotImplementedException();
+            List<MessageExtanded> messages = null;
+            List<ContactExtended> ContactExtended1 = database.ContactExtended.ToList();
+            int count = database.MessageExtanded.Count();
+            if (count > 0)
+            {
+                messages = database.MessageExtanded.ToList();
+            }
+  
+            MessageExtanded newMessage = new MessageExtanded()
+            {
+                Id = count + 1,
+                User1 = connectContactId,
+                User2 = destContactId,
+                Content = content,
+                Sent = true,
+                Created = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")
+            };
+
+
+            MessageExtanded firstMessage = messages.FirstOrDefault(m => m.User1 == connectContactId && m.User2 == destContactId ||
+                                                                        m.User2 == connectContactId && m.User1 == destContactId);
+            if(firstMessage != null)
+            {
+                newMessage.User1 = firstMessage.User1;
+                newMessage.User2 = firstMessage.User2;
+            }
+            database.MessageExtanded.Add(newMessage);
+            await database.SaveChangesAsync();
+            return 1;
         }
 
         public async Task<int> CreateUser(User user, noam2Context database)
@@ -142,14 +187,17 @@ namespace noam2.Service
             throw new NotImplementedException();
         }
 
-        public Task<User> GetUser(string id, noam2Context database)
+        public async Task<User> GetUser(string id, noam2Context database)
         {
-            throw new NotImplementedException();
+            User user = null;
+            List<User> list =await GetAllUsers(database);
+            user = list.FirstOrDefault(user => user.Id == id);
+            return user;
         }
 
-        public Task<User> GetUserById(string id, noam2Context database)
+        public async Task<User> GetUserById(string id, noam2Context database)
         {
-            throw new NotImplementedException();
+            return await GetUser(id, database);
         }
 
         public Task<int> InviteContact(string from, string to, string server, noam2Context database)
