@@ -16,6 +16,7 @@ namespace noam2.Service
 
     public class ServiceDB : IServiceDB
     {
+        List<TokenToId> tokenToIds = new List<TokenToId>() { };
         public async Task<int> CreateContact(string connectedId, Contact contact, noam2Context database)
         {
             ContactExtended contactExtended = new ContactExtended() { Id=contact.Id, Name=contact.Name, Server=contact.Server, 
@@ -92,17 +93,11 @@ namespace noam2.Service
 
         public async Task<int> CreateMessage(string connectContactId, string destContactId, string content, noam2Context database)
         {
-            List<MessageExtanded> messages = null;
-            List<ContactExtended> ContactExtended1 = database.ContactExtended.ToList();
-            int count = database.MessageExtanded.Count();
-            if (count > 0)
-            {
-                messages = database.MessageExtanded.ToList();
-            }
-  
+            List<MessageExtanded> messages = database.MessageExtanded.ToList();
+            int count = messages.Count();
+           
             MessageExtanded newMessage = new MessageExtanded()
             {
-                Id = count + 1,
                 User1 = connectContactId,
                 User2 = destContactId,
                 Content = content,
@@ -120,6 +115,7 @@ namespace noam2.Service
             }
             database.MessageExtanded.Add(newMessage);
             await database.SaveChangesAsync();
+            int i = 0;
             return 1;
         }
 
@@ -133,16 +129,42 @@ namespace noam2.Service
 
         
 
-        public Task<int> DeleteMessageById(string connectContactId, string destContactId, int messageId, noam2Context database)
+        public async Task<int> DeleteMessageById(string connectContactId, string destContactId, int messageId, noam2Context database)
         {
-            throw new NotImplementedException();
+
+            var toRemove = database.MessageExtanded.Where(c => c.Id == messageId);
+            if (toRemove == null)
+            {
+                return 0;
+            }
+            database.MessageExtanded.RemoveRange(toRemove);
+            await database.SaveChangesAsync();
+
+            return 1;
         }
 
         
 
-        public Task<List<Model.Message>> GetAllMessages(string connectContactId, string destContactId, noam2Context database)
+        public async Task<List<Model.Message>> GetAllMessages(string connectContactId, string destContactId, noam2Context database)
         {
-            throw new NotImplementedException();
+            List< MessageExtanded > messageExtandeds  = database.MessageExtanded.ToList();
+            List<Model.Message> messages = new List<Model.Message>() { };
+            foreach (var message in messageExtandeds)
+            {
+                if(message.User1.Equals(connectContactId) && message.User2.Equals(destContactId) ||
+                    message.User2.Equals(connectContactId) && message.User1.Equals(destContactId))
+                {
+                    messages.Add(new Model.Message()
+                    {
+                        Id = message.Id,
+                        Content = message.Content,
+                        Created = message.Created,
+                        Sent = message.Sent
+                    });
+                }
+            }
+            return messages;
+            
         }
 
         public async Task<List<User>> GetAllUsers(noam2Context database)
@@ -182,9 +204,18 @@ namespace noam2.Service
 
         
 
-        public Task<Model.Message> GetMessageById(string connectContactId, string destContactId, int messageId, noam2Context database)
+        public async Task<Model.Message> GetMessageById(string connectContactId, string destContactId, int messageId, noam2Context database)
         {
-            throw new NotImplementedException();
+            List<MessageExtanded> messages = database.MessageExtanded.ToList();
+            foreach (var message in messages)
+            {
+                if (message.Id.Equals(messageId))
+                {
+                    return new Model.Message() { Id = message.Id, Content = message.Content, Created = message.Created, Sent = message.Sent };
+                }
+            }
+            return null;
+            
         }
 
         public async Task<User> GetUser(string id, noam2Context database)
@@ -205,9 +236,15 @@ namespace noam2.Service
             throw new NotImplementedException();
         }
 
-        public Task<int> SetToken(TokenToId tokenToId, noam2Context database)
+        public async Task<int> SetToken(TokenToId tokenToId, noam2Context database)
         {
-            throw new NotImplementedException();
+            TokenToId isTokenExist = null;
+            isTokenExist = tokenToIds.FirstOrDefault(t => t.Id == tokenToId.Id && t.Token == tokenToId.Token);
+            if (isTokenExist == null)
+            {
+                tokenToIds.Add(tokenToId);
+            }
+            return 1;
         }
 
         public Task<int> TransferMessage(string from, string to, string content, noam2Context database)
@@ -217,9 +254,60 @@ namespace noam2.Service
 
         
 
-        public Task<int> UpdateMessageById(string connectContactId, string destContactId, int messageId, string message, noam2Context database)
+        public async Task<int> UpdateMessageById(string connectContactId, string destContactId, int messageId, string content, noam2Context database)
         {
-            throw new NotImplementedException();
+            MessageExtanded message = database.MessageExtanded.ToList().FirstOrDefault(m => m.Id == messageId);
+            var toEdit = database.MessageExtanded.Where(m => m.Id == messageId);
+            if (toEdit == null)
+            {
+                return 0;
+            }
+            database.MessageExtanded.RemoveRange(toEdit);
+            await database.SaveChangesAsync();
+            database.MessageExtanded.Add(new MessageExtanded() { Id = message.Id, Content= content, Created = message.Created,
+                                                User1 = message.User1, User2 = message.User2, Sent = message.Sent});
+            await database.SaveChangesAsync();
+            return 1;
+        }
+
+        public async Task notifyTransferToAndroidDevicesAsync(String id, String Content)
+        {
+
+            if (FirebaseApp.DefaultInstance == null)
+            {
+                FirebaseApp.Create(new AppOptions()
+                {
+                    Credential = GoogleCredential.FromFile("private_key.json")
+                });
+
+            }
+
+
+            TokenToId isTokenExist = null;
+            isTokenExist = tokenToIds.FirstOrDefault(t => t.Id == id);
+            if (isTokenExist == null)
+            {
+                return;
+            }
+
+            var registrationToken = isTokenExist.Token;
+
+            // See documentation on defining a message payload.
+            var message = new FirebaseAdmin.Messaging.Message()
+            {
+                Data = new Dictionary<string, string>() { { "ITAY", "NOAM" } },
+                Token = registrationToken,
+                Notification = new Notification() { Title = "this is the title!!", Body = " this is the body!!!" }
+            };
+
+
+
+
+            // Send a message to the device corresponding to the provided
+            // registration token.
+            string response = await FirebaseMessaging.DefaultInstance.SendAsync(message);
+            // Response is a message ID string.
+            Console.WriteLine("Successfully sent message: " + response);
         }
     }
 }

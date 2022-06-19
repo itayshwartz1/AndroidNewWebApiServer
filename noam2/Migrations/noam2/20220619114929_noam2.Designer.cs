@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using noam2.Data;
 
@@ -10,9 +11,10 @@ using noam2.Data;
 namespace noam2.Migrations.noam2
 {
     [DbContext(typeof(noam2Context))]
-    partial class noam2ContextModelSnapshot : ModelSnapshot
+    [Migration("20220619114929_noam2")]
+    partial class noam2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

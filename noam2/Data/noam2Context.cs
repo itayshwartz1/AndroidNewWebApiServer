@@ -24,5 +24,7 @@ namespace noam2.Data
         public DbSet<noam2.Model.ContactExtended>? ContactExtended { get; set; }
 
         public DbSet<noam2.Model.MessageExtanded>? MessageExtanded { get; set; }
+
+        public DbSet<noam2.Model.MessageNew>? MessageNew { get; set; }
     }
 }
