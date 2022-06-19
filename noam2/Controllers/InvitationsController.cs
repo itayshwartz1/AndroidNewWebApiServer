@@ -34,7 +34,7 @@ namespace noam2.Controllers
         [HttpPost]
         public async Task<IActionResult> InviteContact( [Bind("From,To,Server")] InvitationsMessage invitationsMessage)
         {
-            int isInvited = _contactsService.InviteContact(invitationsMessage.From, invitationsMessage.To, invitationsMessage.Server);
+            int isInvited =await _contactsService.InviteContact(invitationsMessage.From, invitationsMessage.To, invitationsMessage.Server);
             if (isInvited == 1)
             {
                 await hub.Clients.All.SendAsync("ContactAdded", invitationsMessage.From, invitationsMessage.From, invitationsMessage.Server, invitationsMessage.From, invitationsMessage.To);

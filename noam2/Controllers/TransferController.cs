@@ -31,7 +31,7 @@ namespace noam2.Controllers
         [HttpPost]
         public async Task<IActionResult> TransferMessage([Bind("From,To,Content")] TransferMessageObject transferMessageObject)
         {
-            int isTransfered = _contactsService.TransferMessage(transferMessageObject.From, transferMessageObject.To, transferMessageObject.Content);
+            int isTransfered = await _contactsService.TransferMessage(transferMessageObject.From, transferMessageObject.To, transferMessageObject.Content);
             if (isTransfered == 1)
             {
                 await hub.Clients.All.SendAsync("ReceiveMessage", transferMessageObject.Content, transferMessageObject.From, transferMessageObject.To);
