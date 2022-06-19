@@ -40,7 +40,7 @@ namespace noam2.Service
             return null;
         }
 
-        public Task<List<Contact>> GetAllContacts(string connectId, noam2Context database)
+        public async Task<List<Contact>> GetAllContacts(string connectId, noam2Context database)
         {
             List<ContactExtended> contactExtendedsList = database.ContactExtended.ToList();
             List<Contact> contactList = new List<Contact>() { };
@@ -58,9 +58,8 @@ namespace noam2.Service
                     });
                 }
             }
-            throw new NotImplementedException();
 
-            //return contactList
+            return contactList;
         }
 
         public Task<int> DeleteContact(string connectContactId, string contactId, noam2Context database)

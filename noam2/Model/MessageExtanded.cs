@@ -15,9 +15,9 @@ namespace noam2.Model
         public bool Sent { get; set; }
 
         [Required]
-        public bool User1 { get; set; }
+        public string User1 { get; set; }
         [Required]
-        public bool User2 { get; set; }
+        public string User2 { get; set; }
 
     }
 }
