@@ -380,7 +380,7 @@ namespace noam2.Service
             // Response is a message ID string.
             Console.WriteLine("Successfully sent message: " + response);
         }
-        public int TransferMessage(string from, string to, string content)
+        public async Task<int> TransferMessage(string from, string to, string content)
         {
             Chat chat = _chats.FirstOrDefault(c => (c.User1 == from && c.User2 == to) || c.User2 == from && c.User1 == to);
             if (chat == null)

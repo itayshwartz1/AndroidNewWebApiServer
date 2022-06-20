@@ -19,8 +19,8 @@ namespace noam2.Controllers
         public int UpdateMessageById(string connectContactId,  string destContactId, int messageId, string message);
         public int DeleteMessageById(string connectContactId, string destContactId, int messageId);
 
-        public int TransferMessage(string from, string to, string content);
-        public int InviteContact(string from, string to, string server);
+        public Task<int> TransferMessage(string from, string to, string content);
+        public Task<int> InviteContact(string from, string to, string server);
 
 
         ////////////////////////////////////////
