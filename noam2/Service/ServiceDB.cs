@@ -220,7 +220,7 @@ namespace noam2.Service
                         Id = message.Id,
                         Content = message.Content,
                         Created = message.Created,
-                        Sent = message.Sent
+                        Sent =message.Sent
                     });
                 }
             }
