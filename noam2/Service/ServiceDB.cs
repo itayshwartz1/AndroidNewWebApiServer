@@ -266,13 +266,16 @@ namespace noam2.Service
                 Boolean isThereMessage = false;
                 foreach(var messageEx in messageExtandeds)
                 {
-                    if(messageEx.User1.Equals(id) || messageEx.User2.Equals(id)){
+                    if(messageEx.User1.Equals(id) && messageEx.User2.Equals(contact.Id) ||
+                        messageEx.User1.Equals(id) && messageEx.User2.Equals(contact.Id))
+                    {
                         isThereMessage = true;
                     }
                 }
                 if (!isThereMessage)
                 {
-                    chats.Add(new Chat() { Id = chats.Count() + 1, User1 = id, User2 = contact.Id });
+                    List<Model.Message> emptyMessages = new List<Model.Message>() { };
+                    chats.Add(new Chat() { Id = chats.Count() + 1, User1 = id, User2 = contact.Id, Messages = emptyMessages });
                 }
             }
 
@@ -372,7 +375,7 @@ namespace noam2.Service
 
         public async Task<int> TransferMessage(string from, string to, string content, noam2Context database)
         {
-            List<Chat> chats = await GetChats(from, database);
+            List<Chat> chats = await GetChats(to, database);
             Chat chat = chats.FirstOrDefault(c => (c.User1 == from && c.User2 == to) || c.User2 == from && c.User1 == to);
             if(chat == null)
             {
