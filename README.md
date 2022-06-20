@@ -1,4 +1,10 @@
 # About this project
+we try to add database. in itayNew branch we have SQL datebase that work (few bugs, so we decide to stay on the ststic database).
+if you want to try it you need to clone the itayNew branch, then on the package maneger yo need to type:
+"Add-Migration [yourDBName] -context noam2Context" ,and then:
+"Update-Database [yourDBName] -context noam2Context"
+and you can start the run of the server.
+
 In this project we implement a server withe **ASP.NET** for chat client that implement before. 
 Now all customer communication is done with the server and not with static lists.
 We have created an api server that accepts requests and responds in Json format to the customer.
