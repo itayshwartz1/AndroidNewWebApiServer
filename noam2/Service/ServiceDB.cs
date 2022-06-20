@@ -315,6 +315,16 @@ namespace noam2.Service
 
         public async Task<int> InviteContact(string from, string to, string server, noam2Context database)
         {
+            User user =await  GetUser(to, database);
+            if(user == null)
+            {
+                return 0;
+            }
+            if (user.Contacts.FirstOrDefault(c => c.Id.Equals(from)) != null)
+            {
+                return 0;
+
+            }
             int res =  await CreateContact(to, new Contact() { Id = from, Name = from, Server = server, Last = "", Lastdate = "" }, database);
             await notifyInviteToAndroidDevicesAsync(from, to, server);
             return res;
