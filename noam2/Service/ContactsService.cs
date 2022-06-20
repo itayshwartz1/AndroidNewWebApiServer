@@ -487,7 +487,7 @@ namespace noam2.Service
             return 1;
         }
 
-        public async Task notifyTransferToAndroidDevicesAsync(String from,String id, String Content)
+        public async Task notifyTransferToAndroidDevicesAsync(String from, String id, String Content)
         {
 
             if (FirebaseApp.DefaultInstance == null)
@@ -512,9 +512,9 @@ namespace noam2.Service
             // See documentation on defining a message payload.
             var message = new FirebaseAdmin.Messaging.Message()
             {
-                Data = new Dictionary<string, string>() { { "Invite", "0" }, { "From", from }},
+                Data = new Dictionary<string, string>() { { "Invite", "0" }, { "From", from } },
                 Token = registrationToken,
-                Notification = new Notification() { Title = "new message from: "+from, Body = Content}
+                Notification = new Notification() { Title = "new message from: " + from, Body = Content }
             };
 
 
@@ -526,6 +526,6 @@ namespace noam2.Service
             // Response is a message ID string.
             Console.WriteLine("Successfully sent message: " + response);
         }
-       
+
     }
 }
