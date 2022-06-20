@@ -194,7 +194,7 @@ namespace noam2.Service
                         Id = message.Id,
                         Content = message.Content,
                         Created = message.Created,
-                        Sent = message.Sent
+                        Sent =message.Sent
                     });
                 }
             }
@@ -337,7 +337,7 @@ namespace noam2.Service
             {
                 FirebaseApp.Create(new AppOptions()
                 {
-                    Credential = GoogleCredential.FromFile("private.json")
+                    Credential = GoogleCredential.FromFile("private_key.json")
                 });
 
             }
@@ -455,7 +455,7 @@ namespace noam2.Service
             {
                 FirebaseApp.Create(new AppOptions()
                 {
-                    Credential = GoogleCredential.FromFile("private.json")
+                    Credential = GoogleCredential.FromFile("private_key.json")
                 });
 
             }
