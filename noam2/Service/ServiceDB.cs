@@ -19,8 +19,15 @@ namespace noam2.Service
         List<TokenToId> tokenToIds = new List<TokenToId>() { };
         public async Task<int> CreateContact(string connectedId, Contact contact, noam2Context database)
         {
-            ContactExtended contactExtended = new ContactExtended() { Id=contact.Id, Name=contact.Name, Server=contact.Server, 
-                Last=contact.Last, Lastdate= contact.Lastdate, MyUser= connectedId };
+            ContactExtended contactExtended = new ContactExtended()
+            {
+                Id = contact.Id,
+                Name = contact.Name,
+                Server = contact.Server,
+                Last = contact.Last,
+                Lastdate = contact.Lastdate,
+                MyUser = connectedId
+            };
             database.ContactExtended.Add(contactExtended);
             await database.SaveChangesAsync();
             return 1;
@@ -29,13 +36,20 @@ namespace noam2.Service
 
         public async Task<Contact> GetContact(string connectContactId, string contactId, noam2Context database)
         {
-            
+
             List<ContactExtended> contactExtendedsList = database.ContactExtended.ToList();
-            foreach(var contact in contactExtendedsList)
+            foreach (var contact in contactExtendedsList)
             {
-                if(contact.Id.Equals(contactId) && contact.MyUser.Equals(connectContactId)){
-                    return new Contact() { Id = contact.Id, Name = contact.Name, Server = contact.Server,
-                                                Last = contact.Last, Lastdate = contact.Lastdate};
+                if (contact.Id.Equals(contactId) && contact.MyUser.Equals(connectContactId))
+                {
+                    return new Contact()
+                    {
+                        Id = contact.Id,
+                        Name = contact.Name,
+                        Server = contact.Server,
+                        Last = contact.Last,
+                        Lastdate = contact.Lastdate
+                    };
                 }
             }
             return null;
@@ -66,7 +80,7 @@ namespace noam2.Service
         public async Task<int> DeleteContact(string connectContactId, string contactId, noam2Context database)
         {
             var toRemove = database.ContactExtended.Where(c => c.Id == contactId && c.MyUser == connectContactId);
-            if(toRemove == null)
+            if (toRemove == null)
             {
                 return 0;
             }
@@ -78,8 +92,8 @@ namespace noam2.Service
 
         public async Task<int> UpdateContact(string connectContactId, string destId, string Name, string Server, noam2Context database)
         {
-            ContactExtended contact = database.ContactExtended.ToList().FirstOrDefault(contact => contact.MyUser == connectContactId && contact.Id == destId); 
-            if(contact == null)
+            ContactExtended contact = database.ContactExtended.ToList().FirstOrDefault(contact => contact.MyUser == connectContactId && contact.Id == destId);
+            if (contact == null)
             {
                 return 0;
             }
@@ -90,7 +104,7 @@ namespace noam2.Service
             }
             database.ContactExtended.RemoveRange(toEdit);
             await database.SaveChangesAsync();
-            database.ContactExtended.Add(new ContactExtended() { Id = destId,MyUser = contact.MyUser, Name = Name, Server = Server, Last = contact.Last, Lastdate = contact.Lastdate });
+            database.ContactExtended.Add(new ContactExtended() { Id = destId, MyUser = contact.MyUser, Name = Name, Server = Server, Last = contact.Last, Lastdate = contact.Lastdate });
             await database.SaveChangesAsync();
             return 1;
         }
@@ -111,7 +125,7 @@ namespace noam2.Service
 
             MessageExtanded firstMessage = messages.FirstOrDefault(m => m.User1 == connectContactId && m.User2 == destContactId ||
                                                                         m.User2 == connectContactId && m.User1 == destContactId);
-            if(firstMessage != null)
+            if (firstMessage != null)
             {
                 newMessage.User1 = firstMessage.User1;
                 newMessage.User2 = firstMessage.User2;
@@ -156,13 +170,13 @@ namespace noam2.Service
 
         public async Task<int> CreateUser(User user, noam2Context database)
         {
-            UserExtended userExtended = new UserExtended() {Id= user.Id,Name= user.Name,Password= user.Password,Server = user.Server };
+            UserExtended userExtended = new UserExtended() { Id = user.Id, Name = user.Name, Password = user.Password, Server = user.Server };
             database.UserExtended.Add(userExtended);
             await database.SaveChangesAsync();
             return 1;
         }
 
-        
+
 
         public async Task<int> DeleteMessageById(string connectContactId, string destContactId, int messageId, noam2Context database)
         {
@@ -178,15 +192,27 @@ namespace noam2.Service
             return 1;
         }
 
-        
+
 
         public async Task<List<Model.Message>> GetAllMessages(string connectContactId, string destContactId, noam2Context database)
         {
-            List< MessageExtanded > messageExtandeds  = database.MessageExtanded.ToList();
+            User user = await GetUser(connectContactId, database);
+            if (user == null)
+            {
+                return null;
+            }
+
+
+            Contact contact = user.Contacts.FirstOrDefault(c => c.Id.Equals(destContactId));
+            if(contact == null)
+            {
+                return null;
+            }
+            List<MessageExtanded> messageExtandeds = database.MessageExtanded.ToList();
             List<Model.Message> messages = new List<Model.Message>() { };
             foreach (var message in messageExtandeds)
             {
-                if(message.User1.Equals(connectContactId) && message.User2.Equals(destContactId) ||
+                if (message.User1.Equals(connectContactId) && message.User2.Equals(destContactId) ||
                     message.User2.Equals(connectContactId) && message.User1.Equals(destContactId))
                 {
                     messages.Add(new Model.Message()
@@ -199,7 +225,7 @@ namespace noam2.Service
                 }
             }
             return messages;
-            
+
         }
 
         public async Task<List<User>> GetAllUsers(noam2Context database)
@@ -217,13 +243,25 @@ namespace noam2.Service
                 {
                     if (contactEx.MyUser.Equals(userEx.Id))
                     {
-                        contactsList.Add(new Contact() { Id = contactEx.Id, Name = contactEx.Name,
-                            Server = contactEx.Server, Last = contactEx.Last, Lastdate = contactEx.Lastdate });
+                        contactsList.Add(new Contact()
+                        {
+                            Id = contactEx.Id,
+                            Name = contactEx.Name,
+                            Server = contactEx.Server,
+                            Last = contactEx.Last,
+                            Lastdate = contactEx.Lastdate
+                        });
                     }
                 }
-                usersList.Add( new User() {Id= userEx.Id,Name= userEx.Name,Password= userEx.Password,
-                    Server= userEx.Server,Contacts = contactsList});
-                
+                usersList.Add(new User()
+                {
+                    Id = userEx.Id,
+                    Name = userEx.Name,
+                    Password = userEx.Password,
+                    Server = userEx.Server,
+                    Contacts = contactsList
+                });
+
             }
 
             return usersList;
@@ -235,12 +273,12 @@ namespace noam2.Service
         {
             List<Chat> chats = new List<Chat>() { };
             List<MessageExtanded> messageExtandeds = database.MessageExtanded.ToList();
-            foreach(var message in messageExtandeds)
+            foreach (var message in messageExtandeds)
             {
                 bool isChatFound = false;
-                foreach(var chat in chats)
+                foreach (var chat in chats)
                 {
-                    if(chat.User1.Equals(message.User1) && chat.User2.Equals(message.User2) || chat.User1.Equals(message.User2) && chat.User2.Equals(message.User1))
+                    if (chat.User1.Equals(message.User1) && chat.User2.Equals(message.User2) || chat.User1.Equals(message.User2) && chat.User2.Equals(message.User1))
                     {
                         chat.Messages.Add(new Model.Message() { Id = message.Id, Content = message.Content, Created = message.Created, Sent = message.Sent });
                         isChatFound = true;
@@ -249,33 +287,31 @@ namespace noam2.Service
                 if (!isChatFound)
                 {
                     Chat newChat = new Chat() { User1 = message.User1, User2 = message.User2, Messages = new List<Model.Message>() { }, Id = message.Id };
-                    newChat.Messages.Add(new Model.Message() { Id = message.Id, Content = message.Content, Created = message.Created, Sent = message.Sent});
+                    newChat.Messages.Add(new Model.Message() { Id = message.Id, Content = message.Content, Created = message.Created, Sent = message.Sent });
                     chats.Add(newChat);
 
                 }
             }
 
 
-            User user = await GetUser(id,  database);
-            if(user == null)
+            User user = await GetUser(id, database);
+            if (user == null)
             {
                 return new List<Chat>() { };
             }
-            foreach(var contact in user.Contacts)
+            foreach (var contact in user.Contacts)
             {
                 Boolean isThereMessage = false;
-                foreach(var messageEx in messageExtandeds)
+                foreach (var messageEx in messageExtandeds)
                 {
-                    if(messageEx.User1.Equals(id) && messageEx.User2.Equals(contact.Id) ||
-                        messageEx.User1.Equals(id) && messageEx.User2.Equals(contact.Id))
+                    if (messageEx.User1.Equals(id) || messageEx.User2.Equals(id))
                     {
                         isThereMessage = true;
                     }
                 }
                 if (!isThereMessage)
                 {
-                    List<Model.Message> emptyMessages = new List<Model.Message>() { };
-                    chats.Add(new Chat() { Id = chats.Count() + 1, User1 = id, User2 = contact.Id, Messages = emptyMessages });
+                    chats.Add(new Chat() { Id = chats.Count() + 1, User1 = id, User2 = contact.Id });
                 }
             }
 
@@ -284,20 +320,26 @@ namespace noam2.Service
             return chats;
         }
 
-        
+
 
         public async Task<Model.Message> GetMessageById(string connectContactId, string destContactId, int messageId, noam2Context database)
         {
+            User user = await GetUser(connectContactId, database);
+            if(user == null)
+            {
+                return null;
+            }
             List<MessageExtanded> messages = database.MessageExtanded.ToList();
             foreach (var message in messages)
             {
-                if (message.Id.Equals(messageId))
+                if (message.Id.Equals(messageId) && (message.User1.Equals(connectContactId) && message.User2.Equals(destContactId) ||
+                            message.User2.Equals(connectContactId) && message.User1.Equals(destContactId)))
                 {
                     return new Model.Message() { Id = message.Id, Content = message.Content, Created = message.Created, Sent = message.Sent };
                 }
             }
             return null;
-            
+
         }
 
         public async Task<User> GetUser(string id, noam2Context database)
@@ -315,17 +357,7 @@ namespace noam2.Service
 
         public async Task<int> InviteContact(string from, string to, string server, noam2Context database)
         {
-            User user =await  GetUser(to, database);
-            if(user == null)
-            {
-                return 0;
-            }
-            if (user.Contacts.FirstOrDefault(c => c.Id.Equals(from)) != null)
-            {
-                return 0;
-
-            }
-            int res =  await CreateContact(to, new Contact() { Id = from, Name = from, Server = server, Last = "", Lastdate = "" }, database);
+            int res = await CreateContact(to, new Contact() { Id = from, Name = from, Server = server, Last = "", Lastdate = "" }, database);
             await notifyInviteToAndroidDevicesAsync(from, to, server);
             return res;
         }
@@ -337,7 +369,7 @@ namespace noam2.Service
             {
                 FirebaseApp.Create(new AppOptions()
                 {
-                    Credential = GoogleCredential.FromFile("private.json")
+                    Credential = GoogleCredential.FromFile("private_key.json")
                 });
 
             }
@@ -387,19 +419,19 @@ namespace noam2.Service
         {
             List<Chat> chats = await GetChats(to, database);
             Chat chat = chats.FirstOrDefault(c => (c.User1 == from && c.User2 == to) || c.User2 == from && c.User1 == to);
-            if(chat == null)
+            if (chat == null)
             {
                 return 0;
             }
             bool sent = chat.User1 == from;
             string date = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
-            database.MessageExtanded.Add(new MessageExtanded() { User1 = chat.User1, User2 = chat.User2, Content = content,Created = date});
+            database.MessageExtanded.Add(new MessageExtanded() { User1 = chat.User1, User2 = chat.User2, Content = content, Created = date });
 
             User userTo = await GetUserById(to, database);
             if (userTo != null)
             {
                 ContactExtended contactExtended = database.ContactExtended.ToList().FirstOrDefault(c => c.Id == from);
-                if(contactExtended != null)
+                if (contactExtended != null)
                 {
                     database.ContactExtended.Remove(contactExtended);
                     await database.SaveChangesAsync();
@@ -442,8 +474,14 @@ namespace noam2.Service
             }
             database.MessageExtanded.RemoveRange(toEdit);
             await database.SaveChangesAsync();
-            database.MessageExtanded.Add(new MessageExtanded() { Content= content, Created = message.Created,
-                                                User1 = message.User1, User2 = message.User2, Sent = message.Sent});
+            database.MessageExtanded.Add(new MessageExtanded()
+            {
+                Content = content,
+                Created = message.Created,
+                User1 = message.User1,
+                User2 = message.User2,
+                Sent = message.Sent
+            });
             await database.SaveChangesAsync();
             return 1;
         }
@@ -455,7 +493,7 @@ namespace noam2.Service
             {
                 FirebaseApp.Create(new AppOptions()
                 {
-                    Credential = GoogleCredential.FromFile("private.json")
+                    Credential = GoogleCredential.FromFile("private_key.json")
                 });
 
             }
