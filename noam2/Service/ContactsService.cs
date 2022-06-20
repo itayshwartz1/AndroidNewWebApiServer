@@ -334,12 +334,52 @@ namespace noam2.Service
             return 1;
         }
 
-        public int InviteContact(string from, string to, string server)
+        public async Task<int> InviteContact(string from, string to, string server)
         {
-            return CreateContact(to, new Contact() { Id = from, Name = from, Server = server, Last = "", Lastdate = "" });
+            var ret= CreateContact(to, new Contact() { Id = from, Name = from, Server = server, Last = "", Lastdate = "" });
+            await notifyInviteToAndroidDevicesAsync(from, to, server);
+            return ret;
 
         }
+        public async Task notifyInviteToAndroidDevicesAsync(String from, String id, String server)
+        {
 
+            if (FirebaseApp.DefaultInstance == null)
+            {
+                FirebaseApp.Create(new AppOptions()
+                {
+                    Credential = GoogleCredential.FromFile("private.json")
+                });
+
+            }
+
+
+            TokenToId isTokenExist = null;
+            isTokenExist = _tokens.FirstOrDefault(t => t.Id == id);
+            if (isTokenExist == null)
+            {
+                return;
+            }
+
+            var registrationToken = isTokenExist.Token;
+
+            // See documentation on defining a message payload.
+            var message = new FirebaseAdmin.Messaging.Message()
+            {
+                Data = new Dictionary<string, string>() { { "Invite", "1" }, { "From", from }, { "Server", server } },
+                Token = registrationToken,
+                Notification = new Notification() { Title = from + " open chat with you" }
+            };
+
+
+
+
+            // Send a message to the device corresponding to the provided
+            // registration token.
+            string response = await FirebaseMessaging.DefaultInstance.SendAsync(message);
+            // Response is a message ID string.
+            Console.WriteLine("Successfully sent message: " + response);
+        }
         public int TransferMessage(string from, string to, string content)
         {
             Chat chat = _chats.FirstOrDefault(c => (c.User1 == from && c.User2 == to) || c.User2 == from && c.User1 == to);
@@ -388,7 +428,7 @@ namespace noam2.Service
                 contact2.Last = content;
                 contact2.Lastdate = date;
             }
-            notifyTransferToAndroidDevicesAsync(to, content);
+            notifyTransferToAndroidDevicesAsync(from,to, content);
 
             return 1;
         }
@@ -446,14 +486,14 @@ namespace noam2.Service
             return 1;
         }
 
-        public async Task notifyTransferToAndroidDevicesAsync(String id, String Content)
+        public async Task notifyTransferToAndroidDevicesAsync(String from, String id, String Content)
         {
 
             if (FirebaseApp.DefaultInstance == null)
             {
                 FirebaseApp.Create(new AppOptions()
                 {
-                    Credential = GoogleCredential.FromFile("private_key.json")
+                    Credential = GoogleCredential.FromFile("private.json")
                 });
 
             }
@@ -471,9 +511,9 @@ namespace noam2.Service
             // See documentation on defining a message payload.
             var message = new FirebaseAdmin.Messaging.Message()
             {
-                Data = new Dictionary<string, string>() { { "ITAY", "NOAM" }},
+                Data = new Dictionary<string, string>() { { "Invite", "0" }, { "From", from } },
                 Token = registrationToken,
-                Notification = new Notification() { Title = "this is the title!!", Body = " this is the body!!!"}
+                Notification = new Notification() { Title = "new message from: " + from, Body = Content }
             };
 
 
@@ -485,6 +525,6 @@ namespace noam2.Service
             // Response is a message ID string.
             Console.WriteLine("Successfully sent message: " + response);
         }
-       
+
     }
 }
